@@ -1,0 +1,146 @@
+library(mosaic)
+library(readr)
+library(dplyr)
+library(leaps)
+AmesTrain9 <- read_csv("C:/Users/Xueyi/Desktop/STOR 455/AmesTrain9.csv")
+AmesTest9 <- read_csv("C:/Users/Xueyi/Desktop/STOR 455/AmesTest9.csv")
+Part 6.Cross-validation
+finalModel = lm(formula = Price ~ LotFrontage + LotArea + Quality + Condition + YearBuilt + YearRemodel + BasementFinSF + BasementSF + FirstSF + SecondSF + Bedroom + Fireplaces + GarageSF + EnclosedPorchSF + ScreenPorchSF, data = AmesTrain9)
+
+fitPrice=predict(finalModel,newdata=AmesTest9)
+testresid=AmesTest9$Price - fitPrice
+corsscorr=cor(sqrt(AmesTest9$Price),fitPrice)
+shrinkage  = summary(finalModel)$r.squared- corsscorr^2
+Part 7. Find a “fancy model”
+A.Comparing the models from forward selection, backward elimination, and stepwise selection, we choose the model from backward elimination as our final model. Because it has the biggest R-squared value and a effective small p-value.
+
+model7backwards = lm(Price ~ LotFrontage + LotArea + LotConfig + Quality + Condition + YearBuilt + YearRemodel + ExteriorQ + ExteriorC + Foundation + BasementHt + BasementFinSF + BasementSF + HeatingQC + FirstSF + SecondSF + HalfBath + Bedroom + Fireplaces + GarageType + GarageSF + WoodDeckSF + EnclosedPorchSF + ScreenPorchSF, data = newtrain9)
+
+get rid of variable ‘Order’
+
+newtrain9 = AmesTrain9[-1]
+newtrain9
+
+Forward Selection
+
+Full=lm(Price~., data=newtrain9)
+MSE=(summary(Full)$sigma)^2
+none=lm(Price~1,data=newtrain9)
+step(none,scope=list(upper=Full),scale=MSE,direction="forward",trace= FALSE)
+
+Backward Elimination
+
+Full=lm(Price~., data=newtrain9)
+MSE=(summary(Full)$sigma)^2
+step(Full,scale= MSE,trace=FALSE)
+
+#stepwise selection
+
+Full=lm(Price~., data=newtrain9)
+none=lm(Price~1,data=newtrain9)
+MSE=(summary(Full)$sigma)^2
+step(none,scope=list(upper=Full),scale=MSE, trace=FALSE)
+
+#model from forward selection
+model7forwards = lm(Price ~ Quality + GroundSF + BasementHt + BasementSF + 
+    BasementFinSF + GarageSF + ExteriorQ + LotArea + YearRemodel + 
+    YearBuilt + Condition + Fireplaces + HeatingQC + ScreenPorchSF + 
+    LotFrontage + Foundation + GarageType + Bedroom + LotConfig + 
+    ExteriorC + HalfBath + EnclosedPorchSF + WoodDeckSF, data = newtrain9)
+
+#model from backward elimination
+model7backwards = lm(Price ~ LotFrontage + LotArea + LotConfig + Quality + 
+    Condition + YearBuilt + YearRemodel + ExteriorQ + ExteriorC + 
+    Foundation + BasementHt + BasementFinSF + BasementSF + HeatingQC + 
+    FirstSF + SecondSF + HalfBath + Bedroom + Fireplaces + GarageType + 
+    GarageSF + WoodDeckSF + EnclosedPorchSF + ScreenPorchSF, 
+    data = newtrain9)
+
+# model from stepwise selection
+model7stepwise = lm(Price ~ Quality + GroundSF + BasementHt + BasementSF + 
+    BasementFinSF + GarageSF + ExteriorQ + LotArea + YearRemodel + 
+    YearBuilt + Condition + Fireplaces + HeatingQC + ScreenPorchSF + 
+    LotFrontage + Foundation + GarageType + Bedroom + LotConfig + 
+    ExteriorC + HalfBath + EnclosedPorchSF + WoodDeckSF, data = newtrain9)
+
+
+summary(model7forwards)
+
+summary(model7backwards)
+
+summary(model7stepwise)
+
+#as we see the summary of model7backwards and model7stepwise, then we see if the one predictor matters in model7backwards by doing nested-F test
+anova(model7backwards, model7stepwise)
+
+B.Transformation of explanatory predictors
+
+par(mfrow=c(2, 2))
+
+m7btrans = lm(Price ~ LotFrontage + LotArea + LotConfig + factor(Quality) + factor(Condition) + YearBuilt + YearRemodel + ExteriorQ + ExteriorC + Foundation + BasementHt + BasementFinSF + BasementSF + HeatingQC + FirstSF + SecondSF + HalfBath + Bedroom + Fireplaces + GarageType + GarageSF + WoodDeckSF + EnclosedPorchSF + ScreenPorchSF, data = newtrain9)
+
+plot(m7btrans)
+
+summary(m7btrans)
+
+C.Transformation of response predictor
+
+m7btranslog = lm(log(Price) ~ LotFrontage + LotArea + LotConfig + factor(Quality) + factor(Condition) + YearBuilt + YearRemodel + ExteriorQ + ExteriorC + Foundation + BasementHt + BasementFinSF + BasementSF + HeatingQC + 
+FirstSF + SecondSF + HalfBath + Bedroom + Fireplaces + GarageType + GarageSF + WoodDeckSF + EnclosedPorchSF + ScreenPorchSF,data = newtrain9)
+
+summary(m7btranslog)
+
+m7btranssqu = lm(sqrt(Price) ~  LotFrontage + LotArea + LotConfig + factor(Quality) + factor(Condition) + YearBuilt + YearRemodel + ExteriorQ + ExteriorC + Foundation + BasementHt + BasementFinSF + BasementSF + HeatingQC + 
+FirstSF + SecondSF + HalfBath + Bedroom + Fireplaces + GarageType + GarageSF + WoodDeckSF + EnclosedPorchSF + ScreenPorchSF, data =  newtrain9)
+
+summary(m7btranssqu)
+
+D.Try with interaction
+
+Doing predictor transformation on our model7backwardssqu: adding interactions such as Condition* YearBuilt, GarageType8GaraGeSF,etc. Eventually, we improve our adjusted R-Squared from 0.9215 to 0.9297. Also, from the Nested-F test, we see that the interactions we add are significant to our prediction. Hence, we should choose model7bws as our final model.
+
+model7bws = lm(sqrt(Price) ~  LotFrontage + LotArea + LotConfig + factor(Quality) + factor(Condition) + YearBuilt + YearRemodel + ExteriorQ + ExteriorC + Foundation + BasementHt + BasementFinSF + BasementSF + HeatingQC + 
+FirstSF + SecondSF + HalfBath + Bedroom + Fireplaces + GarageType + GarageSF + WoodDeckSF + EnclosedPorchSF + ScreenPorchSF+HalfBath*Bedroom + HeatingQC*LotArea + HeatingQC*Condition + Condition*YearBuilt + GarageType*GarageSF + ExteriorC*ExteriorQ + BasementHt*BasementFinSF + BasementFinSF*BasementSF + BasementHt*BasementSF, data = newtrain9)
+
+anova(model7bws,m7btranssqu)
+
+summary(model7bws)
+
+Part 8: Cross-validation for your “fancy” model
+A.
+
+AmesTest9$Quality[AmesTest9$Quality== 1] = 2
+AmesTest9$HeatingQC[AmesTest9$HeatingQC== 'Po'] = 'Ex'
+AmesTest9
+
+fitPrice2 = I(predict(model7bws,newdata=AmesTest9))^2
+
+testresid2 = AmesTest9$Price - fitPrice2
+testresid2
+
+B.From the subtraction, we can conclude that the fancy model has bigger mean and smaller standard deviation.
+
+mean(testresid)
+
+sd(testresid)
+
+mean(testresid2)
+
+sd(testresid2)
+
+mean(testresid)-mean(testresid2)
+
+sd(testresid)-sd(testresid2)
+
+C. Our fancy model has poorly predicted values from row 136, 167, 47, and 26.
+
+head(sort(abs(testresid2),decreasing = TRUE),10)
+
+D. Our fancy model has the shrinkage 0.03175179, which is bigger than the shrinkage from the initial model.
+
+shrinkage2  = summary(model7bws)$r.squared- corsscorr^2
+shrinkage
+
+shrinkage2
+
+shrinkage-shrinkage2
