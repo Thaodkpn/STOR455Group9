@@ -2,8 +2,9 @@ library(mosaic)
 library(readr)
 library(dplyr)
 library(leaps)
-AmesTrain9 <- read_csv("C:/Users/Xueyi/Desktop/STOR 455/AmesTrain9.csv")
-AmesTest9 <- read_csv("C:/Users/Xueyi/Desktop/STOR 455/AmesTest9.csv")
+AmesTrain9 <- read_csv("AmesTrain9.csv")
+AmesTest9 <- read_csv("AmesTest9.csv")
+
 Part 6.Cross-validation
 finalModel = lm(formula = Price ~ LotFrontage + LotArea + Quality + Condition + YearBuilt + YearRemodel + BasementFinSF + BasementSF + FirstSF + SecondSF + Bedroom + Fireplaces + GarageSF + EnclosedPorchSF + ScreenPorchSF, data = AmesTrain9)
 
